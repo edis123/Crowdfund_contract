@@ -1,6 +1,6 @@
 pragma solidity >=0.7.0 <0.9.0;
 
-//import "@openzeppelin/contracts/utils/math/SafeMath.sol"; this requires remapping(leaving it alone for now)
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 //IT PREVENTS REENTRANCY WHILE A FUNCTION IS EXECUTING BY LOCKING IT
 //THE AMOUNT TRANSFERED CANNOT BE MODIFIED WHILE EXECUTING
@@ -95,7 +95,7 @@ contract Campaign is ReentrancyGuard {
     address[] contributorList; //RECORD CONTRIBUTORS
     address[] milestoneApproversList; //RECORD MILESTONE APPROVERS
     address[] milestonesModifiersList; //RECORD MILESTONE MODIFIERS
-    address[] campaignApprovalsList; //RECORD CAMPAIGN APPROVERS
+    address[] campaignApprovalsList; //RECORD CAMPAIGN APPROVERS //THIS WILL NOT BE RESETED SINCE VOTING FOR THE CAMPAIGN WILL HAPPEN ONLY ONCE
 
     CampaignInfo public campaign; //MY CAMPAIGN
 
@@ -124,7 +124,7 @@ contract Campaign is ReentrancyGuard {
         });
     }
 
-    //ALL THE EVENTS HERE
+    //ALL THE EVENTS HERE //MORE CAN BE IMPLEMENTED 
     event ContributionMade(uint256 amount, address contributor, address thisCampaign);
     event MilestoneApproved(uint256 milestoneIndex, string description);
     event FundReleased(uint256 milestoneIndex, uint256 amount, address payable owner);
@@ -349,7 +349,7 @@ contract Campaign is ReentrancyGuard {
                 && campaign.status == Status.Active
         ) ? Status.Success : Status.Fail;
 
-        campaign.terminatedOn = block.timestamp;
+        campaign.terminatedOn = block.timestamp;   // RECORD TERMINATION DATE
         emit CampaignFinalized(campaign.id, campaign.status);
 
         if ( //BONUS TIME
@@ -357,11 +357,11 @@ contract Campaign is ReentrancyGuard {
             for (uint256 i = 0; i < contributorList.length; i++) {
                 address contributor_X = contributorList[i];
                 uint256 smallBonus = contributors[contributor_X][campaign.id] / 20; //5% bonus
-                payable(contributor_X).transfer(smallBonus); // REFUNDED
+                payable(contributor_X).transfer(smallBonus); // BONUS SENT TO CONTRIBUTORS
             }
         } else if (campaign.status == Status.Success && campaign.deadline <= block.timestamp) {
             campaign.owner.transfer(campaign.totalContribution); //OWNER GETS THE MONEY, BUT NOT REALISTIC
-        } else if (campaign.status == Status.Fail) {
+        } else if (campaign.status == Status.Fail) { // REFUNDS ARE ISSUED IN CASE OF FAIL
             refundContributors();
         }
     }
@@ -408,7 +408,7 @@ contract Campaign is ReentrancyGuard {
         campaign.approvalCount++;
     }
 
-    //VOTE TO REACTIVATE CAMPAIGN FROM SUSPENSION
+    //REACTIVATES CAMPAIGN FROM SUSPENSION
     /**
      * @notice This function is used to reactivate a previously suspended campaign WITHIN one week from suspension.
      * The function sets the status of the campaign back to 'Active' if it has been approved by more than half of contributors,
@@ -469,6 +469,6 @@ contract Campaign is ReentrancyGuard {
         require(msg.sender == campaign.owner, "No Admin Rights.");
         _;
 
-        // SEE 3 AND 4
+        
     }
 }
