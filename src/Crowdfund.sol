@@ -410,7 +410,7 @@ contract Campaign is ReentrancyGuard {
 
     //VOTE TO REACTIVATE CAMPAIGN FROM SUSPENSION
     /**
-     * @notice This function is used to reactivate a previously suspended campaign WITHIN one week from suspension. 
+     * @notice This function is used to reactivate a previously suspended campaign WITHIN one week from suspension.
      * The function sets the status of the campaign back to 'Active' if it has been approved by more than half of contributors,
      *     and NO more than one week have passed since its suspension.
      * Only the owner of the contract can call this function.
