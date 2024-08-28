@@ -22,7 +22,8 @@ contract CampaignGenerator {
 
     event CampaignCreated(address payable owner, string _name);
 
-    /** @notice This function allows a new campaign to be created by ANYONE.
+    /**
+     * @notice This function allows a new campaign to be created by ANYONE.
      * The details of the new campaign (name, goal amount, deadline and description) are provided as parameters.
      * @dev Requires that the current block timestamp is less than or equal to the campaign's deadline, which is set by adding a certain number of blocks to the current one.
      * @param name The name for the new campaign.
@@ -30,23 +31,12 @@ contract CampaignGenerator {
      * @param deadline The number of blocks until the end of the campaign.
      * @param description A short description for the new campaign.
      */
-    function createCampaign(
-        string memory name,
-        uint256 goal,
-        uint256 deadline,
-        string memory description
-    ) public {
+    function createCampaign(string memory name, uint256 goal, uint256 deadline, string memory description) public {
         uint256 currentTime = block.timestamp;
         uint256 currentDeadline = currentTime + deadline;
         address owner = msg.sender;
         address payable thisOwner = payable(owner);
-        Campaign newCampaign = new Campaign(
-            name,
-            goal,
-            currentDeadline,
-            description,
-            thisOwner
-        );
+        Campaign newCampaign = new Campaign(name, goal, currentDeadline, description, thisOwner);
 
         campaignList.push(address(newCampaign));
         emit CampaignCreated(thisOwner, name);
@@ -135,32 +125,22 @@ contract Campaign is ReentrancyGuard {
     }
 
     //ALL THE EVENTS HERE
-    event ContributionMade(
-        uint256 amount,
-        address contributor,
-        address thisCampaign
-    );
+    event ContributionMade(uint256 amount, address contributor, address thisCampaign);
     event MilestoneApproved(uint256 milestoneIndex, string description);
-    event FundReleased(
-        uint256 milestoneIndex,
-        uint256 amount,
-        address payable owner
-    );
+    event FundReleased(uint256 milestoneIndex, uint256 amount, address payable owner);
     event RefundClaimed(address campaignId, address payable contributor);
     event CampaignFinalized(address campaignId, Status);
 
     // CREATES A NEW MILESTONE BY OWNER ONLY
-    /**@notice This function allows to create a new milestone if they are active campaign owner.
+    /**
+     * @notice This function allows to create a new milestone if they are active campaign owner.
      * The status of the milestone can be 'Active'.
      * Only the owner of the contract can call this function.
      * @dev Requires that the campaign status must be 'Active', and only then the owner can add a new milestone.
      * @param _description A short description for the milestone.
      * @param _amount The amount associated with the milestone.
      */
-    function createMilestone(
-        string memory _description,
-        uint256 _amount
-    ) public onlyOwner {
+    function createMilestone(string memory _description, uint256 _amount) public onlyOwner {
         require(campaign.status == Status.Active, "Campaign not active");
         Milestones memory newMilestone = Milestones({
             description: _description,
@@ -175,7 +155,8 @@ contract Campaign is ReentrancyGuard {
 
     //VOTE
     // CONTRIBUTORS CAN APPROVE A MILESTONE ONLY ONCE IF MILESTONE NOT APPROVED
-    /**@notice This function allows a contributor to approve a milestone.
+    /**
+     * @notice This function allows a contributor to approve a milestone.
      * The milestone can be approved only once by a contributor.
      * Only valid contributors can call this function.
      * @dev Requires that the campaign status must be active and the specified milestone must be active as well.
@@ -188,17 +169,15 @@ contract Campaign is ReentrancyGuard {
         require(campaign.status == Status.Active, "Campaign Not Active");
         require(contributors[approver_X][campaign.id] > 0, "Not A Contributor");
         require(milestone.status == Status.Active, "Already Approved");
-        require(
-            !milestoneApprovals[milestoneIndex][approver_X],
-            "Already An Approver"
-        ); // !!!! APPROVER
+        require(!milestoneApprovals[milestoneIndex][approver_X], "Already An Approver"); // !!!! APPROVER
         milestoneApprovals[milestoneIndex][approver_X] = true; // STORED AS AN APPROVER FOR THIS MILESTONE
         milestoneApproversList.push(approver_X);
         milestone.approvalsCount++;
     }
 
     //VOTE
-    /** @notice This function allows a contributor to modify an existing milestone if they have approved it.
+    /**
+     * @notice This function allows a contributor to modify an existing milestone if they have approved it.
      * The description and amount associated with that milestone can be updated if approved by more than half of contributors.
      * Only the owner of the contract or contributors who've already contributed can call this function.
      * @dev Requires that the campaign status must be active and the specified milestone must be active as well.
@@ -211,21 +190,16 @@ contract Campaign is ReentrancyGuard {
         require(campaign.status == Status.Active, "Campaign Not Active");
         require(contributors[modifier_X][campaign.id] > 0, "Not A Contributor");
         require(milestone.status == Status.Active, "Already Approved");
-        require(
-            !milestoneApprovals[milestoneIndex][modifier_X],
-            "Already An Approver"
-        ); // !!!! CANT MODIFY IF APPROVED
-        require(
-            !milestoneModifiers[milestoneIndex][modifier_X],
-            "Already A Modifier"
-        ); //VOTE ONLY ONCE
+        require(!milestoneApprovals[milestoneIndex][modifier_X], "Already An Approver"); // !!!! CANT MODIFY IF APPROVED
+        require(!milestoneModifiers[milestoneIndex][modifier_X], "Already A Modifier"); //VOTE ONLY ONCE
         milestoneModifiers[milestoneIndex][modifier_X] == true; // STORED AS AN APPROVER FOR THIS MILESTONE
         milestonesModifiersList.push(modifier_X);
         milestone.modifierCount++;
     }
 
     //MODIFY MILESTONES, FUNDS WILL BE REALEASED IF APPROVED
-    /** @notice This function allows the owner of a campaign to modify an existing milestone.
+    /**
+     * @notice This function allows the owner of a campaign to modify an existing milestone.
      * The description and amount associated with that milestone can be updated if approved by more than half of contributors.
      * Only the owner of the contract can call this function.
      * @dev Requires that the campaign status must be active and the specified milestone must be active as well.
@@ -234,44 +208,36 @@ contract Campaign is ReentrancyGuard {
      * @param _description New description for the milestone.
      * @param _amount New amount associated with the milestone.
      */
-    function changeMilestone(
-        uint256 milestoneIndex,
-        string memory _description,
-        uint256 _amount
-    ) public payable noReentrancy onlyOwner {
+    function changeMilestone(uint256 milestoneIndex, string memory _description, uint256 _amount)
+        public
+        payable
+        noReentrancy
+        onlyOwner
+    {
         Milestones storage milestone = milestones[milestoneIndex];
         require(milestone.status == Status.Active, "Not Active");
-        require(
-            milestone.modifierCount > campaign.totalContributors / 2,
-            "Not Enough Approvers"
-        ); //CHECK IF VOTED FROM MORE THAN HALF CONTRIBUTORS
+        require(milestone.modifierCount > campaign.totalContributors / 2, "Not Enough Approvers"); //CHECK IF VOTED FROM MORE THAN HALF CONTRIBUTORS
         milestone.amount = _amount; // NEW AMOUNT
         milestone.description = _description; // NEW DESCRIPTION
         for (uint256 i = 0; i < milestonesModifiersList.length; i++) {
-            milestoneModifiers[milestoneIndex][
-                milestonesModifiersList[i]
-            ] = false; //RESET THE VOTING
+            milestoneModifiers[milestoneIndex][milestonesModifiersList[i]] = false; //RESET THE VOTING
         }
         milestone.modifierCount = 0; //RESET COUNT
     }
 
     //FINALIZE MILESTONE AND RELEASE FUNDS
     //CHECK REQIREMENTS FOR FINALIZATION, EMIT EVENTS
-    /**@notice This function allows the owner of a campaign to finalize a milestone.
+    /**
+     * @notice This function allows the owner of a campaign to finalize a milestone.
      * The funds associated with that milestone are released if approved by more than half of contributors.
      * Only the owner of the contract can call this function.
      * @dev Requires that the campaign status must be active and the specified milestone must be active as well.
      * Also, the number of approvals for a milestone has to exceed 50% of total contributors for it to be finalized successfully.
      */
-    function finalizeMilestone(
-        uint256 milestoneIndex
-    ) public payable noReentrancy onlyOwner {
+    function finalizeMilestone(uint256 milestoneIndex) public payable noReentrancy onlyOwner {
         Milestones storage milestone = milestones[milestoneIndex];
         require(milestone.status == Status.Active, "Not Active");
-        require(
-            milestone.approvalsCount > campaign.totalContributors / 2,
-            "Not Enough Approvers"
-        ); //CHECK IF APPROVED FROM MORE THAN HALF CONTRIBUTORS
+        require(milestone.approvalsCount > campaign.totalContributors / 2, "Not Enough Approvers"); //CHECK IF APPROVED FROM MORE THAN HALF CONTRIBUTORS
         milestone.status = Status.Success;
         emit MilestoneApproved(milestoneIndex, milestone.description);
         uint256 amount = milestone.amount;
@@ -282,7 +248,8 @@ contract Campaign is ReentrancyGuard {
     }
 
     //CANCEL MILESTONE,FUNDS NOT RELEASED AND WILL BE USED FOR OTHER MILESTONES
-    /**@notice This function allows the owner of a campaign to cancel a milestone.
+    /**
+     * @notice This function allows the owner of a campaign to cancel a milestone.
      * The funds associated with that milestone are not released, and can be used for future milestones.
      * Only the owner of the contract can call this function.
      * @dev Requires that the campaign status must be active and the specified milestone must be active as well.
@@ -298,7 +265,8 @@ contract Campaign is ReentrancyGuard {
 
     //LOCKED WHILE EXECUTING
     //CHECK IF CAMPAIGN IS ACTIVE, GOAL NOT REACHED, VALID CONTRIBUTION
-    /** @notice This function allows contributors to contribute to a campaign.
+    /**
+     * @notice This function allows contributors to contribute to a campaign.
      * The amount contributed will be added to the total contribution of the campaign.
      * If the goal is reached or exceeded before the deadline, the funds are released.
      * Only valid contributions can be made.
@@ -324,9 +292,7 @@ contract Campaign is ReentrancyGuard {
         uint256 contribution = msg.value;
         //ADJUST CONTRIBUTION TO NOT EXCEED GOAL
         if (campaign.goal < campaign.totalContribution + contribution) {
-            excess =
-                (contribution + campaign.totalContribution) -
-                campaign.goal;
+            excess = (contribution + campaign.totalContribution) - campaign.goal;
             contribution -= excess;
         }
 
@@ -338,15 +304,12 @@ contract Campaign is ReentrancyGuard {
         if (excess > 0) {
             payable(msg.sender).transfer(excess);
         }
-        emit ContributionMade(
-            campaign.totalContribution,
-            msg.sender,
-            campaign.id
-        );
+        emit ContributionMade(campaign.totalContribution, msg.sender, campaign.id);
     }
 
     // ALL CONTRIBUTORS GET REFUND HERE IF GOAL NOT ACHIEVED PAST DEADLINE
-    /**@notice Function to allocates a  refund for each contributor if campaign failed and deadline passed.
+    /**
+     * @notice Function to allocates a  refund for each contributor if campaign failed and deadline passed.
      * The refund is calculated based on the amount contributed by a user.
      * @dev Requires that the campaign status has been set as 'Fail'. Contributor must have made a valid contribution.
      */
@@ -362,8 +325,7 @@ contract Campaign is ReentrancyGuard {
 
             //FORMULA: PERCENTAGE = CONTRIBUTION/TOTAL  * 100 ; REFUND= PERCENTAGE/100  *REMAINING FUNDS
             //MULTIPLICATION IS DONE FIRST TO MINIMIZE LOSS
-            uint256 refund = (amountContributed * remainingBalance) /
-                campaign.totalContribution;
+            uint256 refund = (amountContributed * remainingBalance) / campaign.totalContribution;
             // uint256 refund = amountContributed.mul(remainingBalance).div(campaign.totalContribution);
 
             payable(contributor_X).transfer(refund); // REFUNDED
@@ -375,44 +337,38 @@ contract Campaign is ReentrancyGuard {
 
     // FINALIZE CAMPAIGN, AFTER DEADLINE OWNER GETS EVERYTHING
     // BEFORE DEADLINE, CONTRIBUTORS GET 5% OF THEIR CONTRIBUTION FOR THAT CAMPAIGN(NOT REALISTIC)
-    /** @notice Function to finalize a campaign and sets the status Success or Fail.
+    /**
+     * @notice Function to finalize a campaign and sets the status Success or Fail.
      * The funds associated with successful milestones are released to the owner, while failed campaigns return all funding to contributors.
      * Only the owner of the contract can call this function.
      */
     function finalizeCampaign() public onlyOwner {
         // SET THE NEW STATUS SUCCESS OR FAIL AFTER CHECKING DEADLINE , MILESTONES AND STATUS
-        campaign.status = (campaign.totalContribution == campaign.goal &&
-            campaign.approvedMilestones == milestones.length &&
-            campaign.status == Status.Active)
-            ? Status.Success
-            : Status.Fail;
+        campaign.status = (
+            campaign.totalContribution == campaign.goal && campaign.approvedMilestones == milestones.length
+                && campaign.status == Status.Active
+        ) ? Status.Success : Status.Fail;
 
         campaign.terminatedOn = block.timestamp;
         emit CampaignFinalized(campaign.id, campaign.status);
 
-        if (//BONUS TIME
-            campaign.status == Status.Success &&
-            campaign.deadline > block.timestamp
-        ) {
+        if ( //BONUS TIME
+        campaign.status == Status.Success && campaign.deadline > block.timestamp) {
             for (uint256 i = 0; i < contributorList.length; i++) {
                 address contributor_X = contributorList[i];
-                uint256 smallBonus = contributors[contributor_X][campaign.id] /
-                    20; //5% bonus
+                uint256 smallBonus = contributors[contributor_X][campaign.id] / 20; //5% bonus
                 payable(contributor_X).transfer(smallBonus); // REFUNDED
             }
-        } else if (
-            campaign.status == Status.Success &&
-            campaign.deadline <= block.timestamp
-        ) {
+        } else if (campaign.status == Status.Success && campaign.deadline <= block.timestamp) {
             campaign.owner.transfer(campaign.totalContribution); //OWNER GETS THE MONEY, BUT NOT REALISTIC
-        }
-        else if( campaign.status==Status.Fail){
+        } else if (campaign.status == Status.Fail) {
             refundContributors();
         }
     }
 
     // SUSPEND CAMPAIGN FOR A WEEK,ONLY ONCE AND NO EXTENSIONS
-    /** @notice records the number of suspensions and does not allow more that once( what would be the point otherwise).
+    /**
+     * @notice records the number of suspensions and does not allow more that once( what would be the point otherwise).
      * Deactivates milestones that will be reactivated with the campaign.
      * @dev Only owner can call this.
      * Records the time of suspension for future audits and sets the status to "suspended".
@@ -435,7 +391,8 @@ contract Campaign is ReentrancyGuard {
     }
 
     //VOTE TO REACTIVATE CAMPAIGN
-    /** @notice This function allows a contributor to approve a campaign.
+    /**
+     * @notice This function allows a contributor to approve a campaign.
      * The campaign can be approved only once by a contributor.
      * Only valid contributors can call this function.
      * @dev Requires that the campaign status must be SUSPENDED.
@@ -445,30 +402,25 @@ contract Campaign is ReentrancyGuard {
         address approver_X = msg.sender;
         require(campaign.status == Status.Suspended, "Not Suspended Campaign");
         require(contributors[approver_X][campaign.id] > 0, "Not A Contributor");
-        require(
-            !campaignApprovals[approver_X][campaign.id],
-            "Already Approved Campaign"
-        ); //VOTE ONLY ONCE
+        require(!campaignApprovals[approver_X][campaign.id], "Already Approved Campaign"); //VOTE ONLY ONCE
         campaignApprovals[approver_X][campaign.id] == true; // STORED AS AN APPROVER FOR THIS MILESTONE
         campaignApprovalsList.push(approver_X);
         campaign.approvalCount++;
     }
 
     //VOTE TO REACTIVATE CAMPAIGN FROM SUSPENSION
-    /**@notice This function is used to reactivate a previously suspended campaign WITHIN one week from suspension. 
-      * The function sets the status of the campaign back to 'Active' if it has been approved by more than half of contributors,
-        and NO more than one week have passed since its suspension.
-      * Only the owner of the contract can call this function.
-      * @dev Requires that the campaign status must be 'Suspended', and NO more than 7 days (approx. 1 week) 
-        have passed after the campaign was suspended.
-        Also, it requires at least half of total contributors to approve for the campaign reactivation.
-      */
+    /**
+     * @notice This function is used to reactivate a previously suspended campaign WITHIN one week from suspension. 
+     * The function sets the status of the campaign back to 'Active' if it has been approved by more than half of contributors,
+     *     and NO more than one week have passed since its suspension.
+     * Only the owner of the contract can call this function.
+     * @dev Requires that the campaign status must be 'Suspended', and NO more than 7 days (approx. 1 week)
+     *     have passed after the campaign was suspended.
+     *     Also, it requires at least half of total contributors to approve for the campaign reactivation.
+     */
     function reactivateCampaign() public onlyOwner {
         require(campaign.status == Status.Suspended, "Campaign Not Suspended");
-        require(
-            campaign.approvalCount > campaign.totalContributors / 2,
-            "Not Enough Approvals"
-        );
+        require(campaign.approvalCount > campaign.totalContributors / 2, "Not Enough Approvals");
         uint256 rightNow = block.timestamp;
         if (campaign.suspendedOn + 10080 < rightNow) {
             //   1 WEEK SUSPENSION LENGTH OTHERWISE FAIL
@@ -491,27 +443,18 @@ contract Campaign is ReentrancyGuard {
     }
 
     //ADDRESS OF THE CAMPAIGN IS THE ID
-    function getContributorInfo(
-        address campaignId,
-        address contributor
-    ) external view returns (uint256) {
+    function getContributorInfo(address campaignId, address contributor) external view returns (uint256) {
         return contributors[contributor][campaignId];
     }
 
     //CAMPAIGN ID IS NOT NEEDED IN THIS IMPLEMENTATION
-    function getMilestoneStatus(
-        uint256 milestoneIndex
-    ) external view returns (Milestones memory) {
+    function getMilestoneStatus(uint256 milestoneIndex) external view returns (Milestones memory) {
         Milestones storage milestone = milestones[milestoneIndex];
         return milestone;
     }
 
     //CAMPAIGN ID IS NOT NEEDED  AS A PARAMETER IN THIS IMPLEMENTATION
-    function getCampaignContributors()
-        external
-        view
-        returns (address[] memory)
-    {
+    function getCampaignContributors() external view returns (address[] memory) {
         return contributorList;
     }
 

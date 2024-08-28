@@ -3,11 +3,8 @@ pragma solidity >=0.7.0 <0.9.0;
 import {Script, console} from "forge-std/Script.sol";
 import {CampaignGenerator} from "../src/Crowdfund.sol";
 
-
-contract Crowdfund is Script{
-
-
- CampaignGenerator public campgen;
+contract Crowdfund is Script {
+    CampaignGenerator public campgen;
 
     function setUp() public {}
 
@@ -18,5 +15,4 @@ contract Crowdfund is Script{
 
         vm.stopBroadcast();
     }
-
 }
