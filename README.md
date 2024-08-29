@@ -1,6 +1,5 @@
 # Crowdfund_contract
-A comprehensive smart contract that handles many aspects of creating and running a funding campaign. 
-It allows creation of multiple funding campaigns and milestone within each campaign. Milestones are created , modified or canceled depending on contributor's approval. Campaigns can be creted, suspended and reactivated. If campign is a success the creator gets the funding otherwise it gets redistributed in relation of the amount contributed for each contributor.See code for more details.
+A versatile smart contract designed to manage various aspects of creating and running funding campaigns. It supports the creation of multiple campaigns, each with its own set of milestones. Milestones can be created, modified, or canceled based on contributor approval. Campaigns can be launched, suspended, and reactivated as needed. If a campaign succeeds, the creator receives the funds; otherwise, contributions are redistributed proportionally to each contributor's input. For more details, please refer to the code.
 
 Find it on : https://sepolia.etherscan.io/address/0x8470E4f8051D0304Db2D0adf05E3aCC3f9423D98#readContract
    address@: 0x8470E4f8051D0304Db2D0adf05E3aCC3f9423D98
