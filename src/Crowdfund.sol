@@ -1,10 +1,8 @@
 pragma solidity >=0.7.0 <0.9.0;
 
 // import "lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol"; ///SAFE MATH
-
-
-
+import "@openzeppelin/contracts/utils/math/Math.sol";
+///SAFE MATH
 
 //IT PREVENTS REENTRANCY WHILE A FUNCTION IS EXECUTING BY LOCKING IT
 //THE AMOUNT TRANSFERED CANNOT BE MODIFIED WHILE EXECUTING
@@ -128,7 +126,7 @@ contract Campaign is ReentrancyGuard {
         });
     }
 
-    //ALL THE EVENTS HERE //MORE CAN BE IMPLEMENTED 
+    //ALL THE EVENTS HERE //MORE CAN BE IMPLEMENTED
     event ContributionMade(uint256 amount, address contributor, address thisCampaign);
     event MilestoneApproved(uint256 milestoneIndex, string description);
     event FundReleased(uint256 milestoneIndex, uint256 amount, address payable owner);
@@ -146,7 +144,7 @@ contract Campaign is ReentrancyGuard {
      */
     function createMilestone(string memory _description, uint256 _amount) public onlyOwner {
         require(campaign.status == Status.Active, "Campaign not active");
-        require(_amount< campaign.goal && _amount > 0,"Milestone Unrealistic,$$$");
+        require(_amount < campaign.goal && _amount > 0, "Milestone Unrealistic,$$$");
         Milestones memory newMilestone = Milestones({
             description: _description,
             amount: _amount,
@@ -222,7 +220,7 @@ contract Campaign is ReentrancyGuard {
         Milestones storage milestone = milestones[milestoneIndex];
         require(milestone.status == Status.Active, "Not Active");
         require(milestone.modifierCount > campaign.totalContributors / 2, "Not Enough Approvers"); //CHECK IF VOTED FROM MORE THAN HALF CONTRIBUTORS
-        require(_amount< campaign.goal && _amount > 0,"Milestone Unrealistic,$$$");
+        require(_amount < campaign.goal && _amount > 0, "Milestone Unrealistic,$$$");
         milestone.amount = _amount; // NEW AMOUNT
         milestone.description = _description; // NEW DESCRIPTION
         for (uint256 i = 0; i < milestonesModifiersList.length; i++) {
@@ -285,7 +283,7 @@ contract Campaign is ReentrancyGuard {
         address contributor_X = msg.sender;
         require(campaign.status == Status.Active, "Not Active");
         require(campaign.deadline > block.timestamp, "Campaign Terminated");
-        // require(campaign.goal > campaign.totalContribution, "Goal Reached"); 
+        // require(campaign.goal > campaign.totalContribution, "Goal Reached");
         require(amount > 0, "Not A Valid Amount");
         // require(msg.sender != campaign.owner,"Owner Connot Contribute"); //OWNER CANNOT CONTRIBUTE
         // require(contributors[msg.sender][campaign.id]+amount<=campaign.goal,"Exceeds Goal"); //CHECK IF CONTRIBUTION IS LESS THAN GOAL
@@ -320,7 +318,7 @@ contract Campaign is ReentrancyGuard {
      * @dev Requires that the campaign status has been set as 'Fail'. Contributor must have made a valid contribution.
      */
     function refundContributors() public noReentrancy {
-        require(campaign.status == Status.Fail,"Campaign Not Failed, No Refunds");
+        require(campaign.status == Status.Fail, "Campaign Not Failed, No Refunds");
 
         //REFUND IN PERCENTAGE OF THE AVAILABLE FUNDS // MONEY SPENT IS LOST FOREVER
         uint256 remainingBalance = address(this).balance;
@@ -331,9 +329,9 @@ contract Campaign is ReentrancyGuard {
 
             //FORMULA: PERCENTAGE = CONTRIBUTION/TOTAL  * 100 ; REFUND= PERCENTAGE/100  *REMAINING FUNDS
             //MULTIPLICATION IS DONE FIRST TO MINIMIZE LOSS
-             //uint256 refund = (amountContributed * remainingBalance) / campaign.totalContribution;
+            //uint256 refund = (amountContributed * remainingBalance) / campaign.totalContribution;
             // uint256 refund = amountContributed.mul(remainingBalance).div(campaign.totalContribution);
-            uint256 refund = Math.mulDiv(amountContributed,remainingBalance,campaign.totalContribution);// (a*b)/c
+            uint256 refund = Math.mulDiv(amountContributed, remainingBalance, campaign.totalContribution); // (a*b)/c
 
             payable(contributor_X).transfer(refund); // REFUNDED
             emit RefundClaimed(campaign.id, payable(contributor_X));
@@ -349,14 +347,14 @@ contract Campaign is ReentrancyGuard {
      * The funds associated with successful milestones are released to the owner, while failed campaigns return all funding to contributors.
      * Only the owner of the contract can call this function.
      */
-    function finalizeCampaign() public onlyOwner noReentrancy{
+    function finalizeCampaign() public onlyOwner noReentrancy {
         // SET THE NEW STATUS SUCCESS OR FAIL AFTER CHECKING DEADLINE , MILESTONES AND STATUS
         campaign.status = (
             campaign.totalContribution >= campaign.goal && campaign.approvedMilestones == milestones.length
                 && campaign.status == Status.Active
         ) ? Status.Success : Status.Fail;
 
-        campaign.terminatedOn = block.timestamp;   // RECORD TERMINATION DATE
+        campaign.terminatedOn = block.timestamp; // RECORD TERMINATION DATE
         emit CampaignFinalized(campaign.id, campaign.status);
 
         if ( //BONUS TIME
@@ -368,7 +366,8 @@ contract Campaign is ReentrancyGuard {
             }
         } else if (campaign.status == Status.Success && campaign.deadline <= block.timestamp) {
             campaign.owner.transfer(campaign.totalContribution); //OWNER GETS THE MONEY, BUT NOT REALISTIC
-        } else if (campaign.status == Status.Fail) { // REFUNDS ARE ISSUED IN CASE OF FAIL
+        } else if (campaign.status == Status.Fail) {
+            // REFUNDS ARE ISSUED IN CASE OF FAIL
             refundContributors();
         }
     }
@@ -475,7 +474,5 @@ contract Campaign is ReentrancyGuard {
     modifier onlyOwner() {
         require(msg.sender == campaign.owner, "No Admin Rights.");
         _;
-
-        
     }
 }
