@@ -1,7 +1,7 @@
 pragma solidity >=0.7.0 <0.9.0;
 
 // import "lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";//SAFE MATH
+import "@openzeppelin/contracts/utils/math/Math.sol"; //SAFE MATH
 
 //IT PREVENTS REENTRANCY WHILE A FUNCTION IS EXECUTING BY LOCKING IT
 //THE AMOUNT TRANSFERED CANNOT BE MODIFIED WHILE EXECUTING
